@@ -1,0 +1,208 @@
+# importing libraries
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sns
+from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import RandomForestClassifier
+from sklearn import metrics
+from sklearn.metrics import confusion_matrix, classification_report
+from sklearn.tree import export_graphviz
+from IPython.display import Image
+import pydotplus
+from six import StringIO
+
+
+# Importing the dataset
+CeliacData = pd.read_csv('/content/celiac_disease_lab_data_final.csv')
+CeliacData.head()
+CeliacData.info()
+
+
+# Data cleaning
+CeliacData.dropna(inplace=True)
+
+
+# Define features and target variable
+featureAll = ['Age', 'Gender', 'Diarrhoea', 'Abdominal', 'Short_Stature', 'Sticky_Stool', 'Weight_loss', 'IgA', 'IgG', 'IgM', 'Marsh', 'cd_type']
+target = 'Disease_Diagnose'
+x = CeliacData[featureAll]
+y = CeliacData[target]
+
+
+# Use of label encoder from scikit learn library
+# Encode categorical features
+le = LabelEncoder()
+x_encoded = x.copy()
+y_encoded = y.copy()
+for col in x.columns:
+    if x[col].dtype == 'object':
+        x_encoded[col] = le.fit_transform(x[col])
+
+
+x_encoded.head(20)
+
+
+# Select the features you want to plot
+features_to_plot = ['Age', 'Abdominal', 'Short_Stature', 'Weight_loss', 'IgA', 'IgG']
+
+
+# Loop through each feature and plot its histogram
+for feature in features_to_plot:
+    plt.figure(figsize=(6, 4))
+    sns.histplot(CeliacData[feature], bins=20, kde=True)  # Adjust the number of bins as needed
+    plt.title(f'Histogram of feature- {feature}')
+    plt.xlabel(feature)
+    plt.ylabel('Frequency')
+    plt.grid(True)
+    plt.show()
+
+
+# Plot histograms for each feature in featureAll and the target variable
+plt.figure(figsize=(15, 10))
+for i, feature in enumerate(featureAll + [target]):
+    plt.subplot(4, 4, i + 1)
+    if feature == target:
+        sns.countplot(data=CeliacData, x=feature)
+    else:
+        sns.histplot(data=CeliacData, x=feature, kde=True)
+    plt.title(feature)
+    plt.xlabel('')
+    plt.ylabel('Frequency')
+plt.tight_layout()
+plt.show()
+
+
+# Calculate correlation matrix
+correlation_matrix = x_encoded.corr()
+
+
+# Plotting correlation matrix as a heatmap
+plt.figure(figsize=(8, 6))
+sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".2f")
+plt.title("Correlation Matrix of Features")
+plt.show()
+features = ['Age', 'Abdominal', 'Short_Stature', 'Weight_loss', 'IgA', 'IgG']
+x1 = CeliacData[features]
+
+
+#label encoding
+x1_encoded = x1.copy()
+for col in x1.columns:
+    if x1[col].dtype == 'object':
+        x1_encoded[col] = le.fit_transform(x1[col])
+
+
+x1_encoded.head(20)
+
+
+# Calculate correlation matrix
+correlation_matrix = x1_encoded.corr()
+
+
+# Plotting correlation matrix as a heatmap
+plt.figure(figsize=(8, 6))
+sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".2f")
+plt.title("Correlation Matrix of Features")
+plt.show()
+
+
+# Split the dataset into training and testing sets
+x_train, x_test, y_train, y_test = train_test_split(x1_encoded, y, test_size=0.3, random_state=42)
+
+
+# Feature scaling
+x_sc = StandardScaler()
+x_train = x_sc.fit_transform(x_train)
+x_test = x_sc.transform(x_test)
+
+
+# Initialize and fit the Random Forest classifier
+forest_classifier = RandomForestClassifier(n_estimators=100, random_state=42)
+forest_classifier.fit(x_train, y_train)
+
+
+# Make predictions
+y_pred = forest_classifier.predict(x_test)
+print(y_pred)
+
+
+
+
+# Accuracy Score
+print('Accuracy Score : ', metrics.accuracy_score(y_test, y_pred))
+# Classification report
+print(classification_report(y_test, y_pred))
+# Confusion matrix
+cm = confusion_matrix(y_test, y_pred)
+print(cm)
+
+
+# Plotting confusion matrix
+plt.figure(figsize=(8, 6))
+sns.heatmap(cm, annot=True, cmap='coolwarm', fmt=".2f")
+plt.title("Confusion Matrix")
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+plt.show()
+
+
+# Feature importance
+importances = forest_classifier.feature_importances_
+indices = np.argsort(importances)[::-1]
+plt.figure(figsize=(8, 6))
+plt.title("Feature Importance")
+plt.bar(range(x_train.shape[1]), importances[indices], align="center")
+plt.xticks(range(x_train.shape[1]), [features[i] for i in indices], rotation=45)
+plt.xlim([-1, x_train.shape[1]])
+plt.show()
+
+
+# Extract a single decision tree from the random forest
+tree = forest_classifier.estimators_[0]
+
+
+# Export the decision tree to a DOT file
+dot_data = StringIO()
+export_graphviz(tree, out_file=dot_data, filled=True, rounded=True, special_characters=True, feature_names=features, class_names=['0', '1'])
+graph = pydotplus.graph_from_dot_data(dot_data.getvalue())
+
+
+# Visualize the decision tree
+Image(graph.create_png())
+from sklearn.ensemble import RandomForestClassifier
+
+
+
+
+# Create Random Forest classifier object with specified parameters
+forest_classifier = RandomForestClassifier(n_estimators=100, criterion="entropy", max_depth=4, random_state=42)
+
+
+# Fit the classifier to the training data
+forest_classifier.fit(x_train, y_train)
+
+
+# Make predictions
+y_pred = forest_classifier.predict(x_test)
+
+
+# Calculate accuracy
+accuracy = metrics.accuracy_score(y_test, y_pred)
+print("Accuracy:", accuracy)
+
+
+# Extract a single decision tree from the random forest
+tree = forest_classifier.estimators_[0]
+
+
+# Export the decision tree to a DOT file
+dot_data = StringIO()
+export_graphviz(tree, out_file=dot_data, filled=True, rounded=True, special_characters=True, feature_names=features, class_names=['0', '1'])
+graph = pydotplus.graph_from_dot_data(dot_data.getvalue())
+
+
+# Visualize the decision tree
+Image(graph.create_png())
