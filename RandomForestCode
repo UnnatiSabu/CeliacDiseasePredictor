@@ -32,7 +32,6 @@ x = CeliacData[featureAll]
 y = CeliacData[target]
 
 
-# Use of label encoder from scikit learn library
 # Encode categorical features
 le = LabelEncoder()
 x_encoded = x.copy()
@@ -48,8 +47,6 @@ x_encoded.head(20)
 # Select the features you want to plot
 features_to_plot = ['Age', 'Abdominal', 'Short_Stature', 'Weight_loss', 'IgA', 'IgG']
 
-
-# Loop through each feature and plot its histogram
 for feature in features_to_plot:
     plt.figure(figsize=(6, 4))
     sns.histplot(CeliacData[feature], bins=20, kde=True)  # Adjust the number of bins as needed
@@ -129,8 +126,6 @@ y_pred = forest_classifier.predict(x_test)
 print(y_pred)
 
 
-
-
 # Accuracy Score
 print('Accuracy Score : ', metrics.accuracy_score(y_test, y_pred))
 # Classification report
@@ -173,8 +168,6 @@ graph = pydotplus.graph_from_dot_data(dot_data.getvalue())
 # Visualize the decision tree
 Image(graph.create_png())
 from sklearn.ensemble import RandomForestClassifier
-
-
 
 
 # Create Random Forest classifier object with specified parameters
